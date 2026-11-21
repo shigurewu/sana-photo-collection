@@ -59,7 +59,7 @@
   .card{background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; cursor:pointer;}
   .card:active{transform:scale(.98);}
   .frame{position:relative; width:100%; aspect-ratio:3/4; overflow:hidden; background:#f6e8ec;}
-  .frame img.ph{position:absolute; max-width:none;}
+  .bgimg{position:absolute; inset:0; background-repeat:no-repeat;}
   .frame img.full{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
   .frame .nophoto{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:6px; color:var(--muted); font-size:13px; background:repeating-linear-gradient(45deg,#fdf3f5,#fdf3f5 10px,#fbe9ee 10px,#fbe9ee 20px); text-align:center; padding:6px;}
@@ -243,7 +243,15 @@ function ymLabel(s){
   if(s.y) return s.y + "年（无印字年月）";
   return "年月未定";
 }
-/* crop / plain image markup inside a .frame-like relative box */
+/* crop / plain image markup inside a .frame-like relative box.
+   Crops are rendered as a background image: background-size/position percentages
+   locate the crop region exactly (measured crops) or by uniform grid + vertical
+   centering (shop sheets), never distorting the source aspect ratio. */
+function r2(x){ return Math.round(x*100)/100; }
+function frameAttr(p){
+  if(p && p.img && p.cw) return ' style="aspect-ratio:' + p.cw + ' / ' + p.ch + '"';
+  return "";
+}
 function frameInner(p){
   if(!p.img){
     var inner = '<div class="nophoto"><span>图片待补充</span>';
@@ -251,9 +259,19 @@ function frameInner(p){
     if(p.v === "needs_review") inner += '<span class="badge warn">待核实</span>';
     return inner + "</div>";
   }
+  if(p.cw){
+    var st = "background-image:url('" + esc(p.img) + "');background-size:"
+      + r2(100/p.cw) + "% " + r2(100/p.ch) + "%;background-position:"
+      + r2(p.cx/(1-p.cw)*100) + "% " + r2(p.cy/(1-p.ch)*100) + "%";
+    return '<div class="bgimg" style="' + st + '"></div>';
+  }
   if(p.cc){
     var cols = p.cc, rows = p.rc || 1, col = p.ci || 0, row = p.ri || 0;
-    return '<img class="ph" loading="lazy" decoding="async" alt="" src="' + esc(p.img) + '" style="width:' + (cols*100) + '%;height:' + (rows*100) + '%;left:' + (-col*100) + '%;top:' + (-row*100) + '%">';
+    var px = cols > 1 ? col/(cols-1)*100 : 0;
+    var py = (row + 0.5)/rows*100;
+    var st2 = "background-image:url('" + esc(p.img) + "');background-size:"
+      + (cols*100) + "% auto;background-position:" + r2(px) + "% " + r2(py) + "%";
+    return '<div class="bgimg" style="' + st2 + '"></div>';
   }
   return '<img class="full" loading="lazy" decoding="async" alt="" src="' + esc(p.img) + '">';
 }
@@ -303,7 +321,7 @@ function renderWall(reset){
   for(var i=0;i<n;i++){
     var p = wallList[i], s = seriesOf(p);
     html += '<div class="card" data-pid="' + esc(p.id) + '">'
-      + '<div class="frame">' + (p.tp && p.img ? '<span class="corner badge tp">第三方实物图</span>' : "") + frameInner(p) + "</div>"
+      + '<div class="frame"' + frameAttr(p) + '>' + (p.tp && p.img ? '<span class="corner badge tp">第三方实物图</span>' : "") + frameInner(p) + "</div>"
       + '<div class="meta"><span class="pose">' + esc(p.p || "") + '</span>'
       + '<span class="sname">' + esc((s.n || "").trim()) + "</span></div></div>";
   }
@@ -352,7 +370,7 @@ function openPhoto(pid){
   for(var i=0;i<PHOTOS.length;i++) if(PHOTOS[i].id === pid){ p = PHOTOS[i]; break; }
   if(!p) return;
   var s = seriesOf(p);
-  var html = '<div class="frame">' + frameInner(p) + "</div>";
+  var html = '<div class="frame"' + frameAttr(p) + '>' + frameInner(p) + "</div>";
   html += "<h2>" + esc((s.n || "").trim()) + "</h2>";
   html += '<div class="row"><span class="k">款式</span>' + esc(p.p || "") + "</div>";
   html += '<div class="row"><span class="k">年月</span>' + esc(ymLabel(s)) + (s.m && s.mv ? "（印字已核实）" : "") + "</div>";
