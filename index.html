@@ -420,7 +420,7 @@ function renderSeries(){
     else if(firstImg) thumb = frameInner(firstImg);
     else thumb = '<div class="np">无图</div>';
     html += '<div class="srow" data-sid="' + esc(sr.id) + '"><div class="thumb">' + thumb + "</div>"
-      + '<div class="info"><div class="nm">' + esc(sr.n.trim()) + (sr.nt ? '<span class="tag">不追踪</span>' : "") + "</div>"
+      + '<div class="info"><div class="nm">' + esc((sr.n || "").trim()) + (sr.nt ? '<span class="tag">不追踪</span>' : "") + "</div>"
       + '<div class="sub">' + esc(ymLabel(sr)) + " · " + esc(categoryOf(sr)) + " · 单张 " + plist.length + " 张 · 有图 " + withImg + " 张</div></div></div>";
   }
   document.getElementById("slist").innerHTML = html;
