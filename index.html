@@ -544,7 +544,7 @@ function bind(){
   });
 }
 /* ---------- init ---------- */
-fetch("data.json").then(function(r){ return r.json(); }).then(function(d){
+fetch("data.json", { cache: "no-cache" }).then(function(r){ return r.json(); }).then(function(d){
   SERIES = d.series; PHOTOS = d.photos;
   for(var i=0;i<SERIES.length;i++) S[SERIES[i].id] = SERIES[i];
   for(var j=0;j<PHOTOS.length;j++){ var sid = PHOTOS[j].s; (photosBySeries[sid] = photosBySeries[sid] || []).push(PHOTOS[j]); }
