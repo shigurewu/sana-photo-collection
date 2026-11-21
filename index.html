@@ -394,10 +394,17 @@ function openPhoto(pid){
   document.getElementById("modalbody").innerHTML = html;
   document.getElementById("modal").classList.add("on");
   document.body.style.overflow = "hidden";
+  modalOpen = true;
+  try{ history.pushState({ photo: pid }, ""); }catch(e){}
 }
-function closeModal(){
+function closeModalUI(){
+  modalOpen = false;
   document.getElementById("modal").classList.remove("on");
   document.body.style.overflow = "";
+}
+function closeModal(){
+  if(modalOpen){ try{ history.back(); return; }catch(e){} }
+  closeModalUI();
 }
 /* ---------- series view ---------- */
 function seriesCounts(sid){ return photosBySeries[sid] || []; }
@@ -486,24 +493,42 @@ function buildTimeChips(){
   document.getElementById("tposes").innerHTML = ph;
 }
 /* ---------- tabs ---------- */
-function switchTab(tab){
+var modalOpen = false;
+function clearCatalogContext(){
+  state.seriesFilter = null; state.query = "";
+  var q = document.getElementById("q"); if(q) q.value = "";
+}
+function clearTimeContext(){
+  state.time = null; state.pose = null; state.tYear = null;
+  var tr = document.getElementById("tresult");
+  if(tr) tr.textContent = "先选一个年份，下面的照片墙会跟着收窄。";
+}
+function switchTab(tab, fromPop){
+  var prev = state.tab;
   state.tab = tab;
+  if(tab === "time") clearCatalogContext();
   var tabs = ["catalog","series","time"];
   for(var i=0;i<tabs.length;i++){
     document.getElementById("tab-"+tabs[i]).classList.toggle("on", tabs[i] === tab);
     document.getElementById("panel-"+tabs[i]).classList.toggle("on", tabs[i] === tab);
   }
   if(tab === "series"){ buildSeriesChips(); renderSeries(); }
-  if(tab === "time"){ buildTimeChips(); }
+  if(tab === "time"){ buildTimeChips(); renderWall(true); }
+  if(!fromPop && prev !== tab){ try{ history.pushState({ tab: tab }, ""); }catch(e){} }
   window.scrollTo(0, 0);
 }
+window.addEventListener("popstate", function(e){
+  if(modalOpen){ closeModalUI(); return; }
+  var t = e.state && e.state.tab;
+  if(t && t !== state.tab) switchTab(t, true);
+});
 /* ---------- events ---------- */
 function bind(){
   document.getElementById("tab-catalog").addEventListener("click", function(){ switchTab("catalog"); });
   document.getElementById("tab-series").addEventListener("click", function(){ switchTab("series"); });
   document.getElementById("tab-time").addEventListener("click", function(){ switchTab("time"); });
   var q = document.getElementById("q");
-  function doSearch(){ state.query = q.value.trim(); state.seriesFilter = null; renderWall(true); }
+  function doSearch(){ state.query = q.value.trim(); state.seriesFilter = null; clearTimeContext(); renderWall(true); }
   document.getElementById("qbtn").addEventListener("click", doSearch);
   q.addEventListener("keydown", function(e){ if(e.key === "Enter") doSearch(); });
   q.addEventListener("input", function(){ if(!q.value.trim() && state.query){ state.query = ""; renderWall(true); } });
@@ -534,6 +559,7 @@ function bind(){
     if(row){
       state.seriesFilter = row.getAttribute("data-sid");
       state.query = ""; document.getElementById("q").value = "";
+      clearTimeContext();
       switchTab("catalog"); renderWall(true);
       document.getElementById("wallbar").scrollIntoView({ behavior:"smooth" });
     }
@@ -562,6 +588,7 @@ fetch("data.json", { cache: "no-cache" }).then(function(r){ return r.json(); }).
   var withImg = PHOTOS.filter(function(p){ return !!p.img; }).length;
   document.getElementById("counts").innerHTML = "共 <b>" + SERIES.length + "</b> 个系列 · <b>" + PHOTOS.length + "</b> 张单张 · <b>" + withImg + "</b> 张有图";
   document.getElementById("loadmsg").style.display = "none";
+  try{ history.replaceState({ tab: "catalog" }, ""); }catch(e){}
   bind(); renderWall(true);
 }).catch(function(){
   document.getElementById("loadmsg").textContent = "数据加载失败，请确认 data.json 与本页在同一目录。";
