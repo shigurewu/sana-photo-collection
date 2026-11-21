@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sana Photo Collection — 諸橋沙夏 生写真图鉴</title>
+<style>
+  :root{
+    --pink:#e75480; --pink-dark:#c73e68; --pink-soft:#fdeef3; --pink-mid:#f8d7e1;
+    --ink:#2b2326; --muted:#8a7a80; --line:#f0dde2; --bg:#fff9fa; --card:#ffffff;
+    --chip:#f6e8ec; --warn:#b8860b; --warn-bg:#fdf3d7; --tp:#5b6abf; --tp-bg:#e6e9fa;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Noto Sans CJK SC","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg); color:var(--ink); font-size:15px; line-height:1.5;}
+  a{color:var(--pink-dark);}
+  header.site{background:linear-gradient(135deg,#fdeef3,#fff); border-bottom:1px solid var(--line);
+    padding:18px 16px 12px; text-align:center;}
+  header.site h1{font-size:20px; margin:0 0 2px; font-weight:700;}
+  header.site h1 .jp{color:var(--pink-dark);}
+  header.site .counts{color:var(--muted); font-size:13px;}
+  header.site .counts b{color:var(--ink);}
+  header.site .ro{display:inline-block; margin-top:6px; font-size:12px; color:var(--pink-dark);
+    background:var(--pink-soft); border:1px solid var(--pink-mid); padding:1px 10px; border-radius:99px;}
+  nav.tabs{position:sticky; top:0; z-index:20; background:rgba(255,249,250,.95); backdrop-filter:blur(6px);
+    display:flex; gap:8px; padding:10px 12px; border-bottom:1px solid var(--line);}
+  nav.tabs button{flex:1; border:1px solid var(--pink-mid); background:#fff; color:var(--ink);
+    border-radius:99px; padding:8px 0; font-size:15px; cursor:pointer;}
+  nav.tabs button.on{background:var(--pink); border-color:var(--pink); color:#fff; font-weight:600;}
+  main{max-width:1080px; margin:0 auto; padding:12px;}
+  .panel{display:none;}
+  .panel.on{display:block;}
+  .searchbox{display:flex; gap:8px;}
+  .searchbox input{flex:1; font-size:16px; padding:11px 14px; border:1px solid var(--pink-mid);
+    border-radius:12px; background:#fff; outline:none; min-width:0;}
+  .searchbox input:focus{border-color:var(--pink);}
+  .searchbox button{border:none; background:var(--pink); color:#fff; border-radius:12px;
+    padding:0 18px; font-size:15px; cursor:pointer;}
+  .resultline{margin:10px 2px 0; color:var(--muted); font-size:13px; min-height:18px;}
+  .resultline b{color:var(--ink);}
+  .hint{background:var(--pink-soft); border:1px solid var(--pink-mid); border-radius:12px;
+    padding:12px 14px; margin-top:12px; font-size:14px; display:none;}
+  .chips{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 2px;}
+  .chips .lab{font-size:13px; color:var(--muted); align-self:center; margin-right:2px;}
+  .chip{border:1px solid var(--pink-mid); background:#fff; color:var(--ink); border-radius:99px;
+    padding:4px 12px; font-size:13px; cursor:pointer;}
+  .chip small{color:var(--muted); margin-left:3px;}
+  .chip.on{background:var(--pink); border-color:var(--pink); color:#fff;}
+  .chip.on small{color:#ffe3ec;}
+  /* wall */
+  #wallbar{display:flex; align-items:center; gap:8px; margin:16px 2px 8px; flex-wrap:wrap;}
+  #wallbar .t{font-weight:700; font-size:16px;}
+  #wallbar .c{color:var(--muted); font-size:13px;}
+  #wallbar .clear{margin-left:auto; border:1px solid var(--pink-mid); background:#fff; color:var(--pink-dark);
+    border-radius:99px; padding:3px 12px; font-size:13px; cursor:pointer; display:none;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(108px,1fr)); gap:10px;}
+  @media(min-width:640px){ .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px;} }
+  .card{background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; cursor:pointer;}
+  .card:active{transform:scale(.98);}
+  .frame{position:relative; width:100%; aspect-ratio:3/4; overflow:hidden; background:#f6e8ec;}
+  .frame img.ph{position:absolute; max-width:none;}
+  .frame img.full{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
+  .frame .nophoto{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:6px; color:var(--muted); font-size:13px; background:repeating-linear-gradient(45deg,#fdf3f5,#fdf3f5 10px,#fbe9ee 10px,#fbe9ee 20px); text-align:center; padding:6px;}
+  .badge{font-size:11px; padding:1px 8px; border-radius:99px; line-height:1.6;}
+  .badge.tp{background:var(--tp-bg); color:var(--tp);}
+  .badge.warn{background:var(--warn-bg); color:var(--warn);}
+  .card .meta{padding:6px 8px 8px;}
+  .card .pose{font-weight:700; font-size:13px;}
+  .card .sname{display:block; color:var(--muted); font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .card .corner{position:absolute; top:6px; left:6px; z-index:2;}
+  #morewrap{text-align:center; margin:18px 0 8px; display:none;}
+  #more{border:1px solid var(--pink-mid); background:#fff; color:var(--pink-dark); border-radius:99px;
+    padding:9px 28px; font-size:14px; cursor:pointer;}
+  .empty{display:none; text-align:center; color:var(--muted); padding:28px 10px; font-size:14px;}
+  /* series list */
+  .srow{display:flex; gap:10px; background:#fff; border:1px solid var(--line); border-radius:12px;
+    padding:8px; margin-top:8px; cursor:pointer; align-items:center;}
+  .srow:active{background:var(--pink-soft);}
+  .srow .thumb{flex:0 0 45px; width:45px; height:60px; border-radius:8px; overflow:hidden; position:relative; background:#f6e8ec;}
+  .srow .thumb img.ph{position:absolute; max-width:none;}
+  .srow .thumb img.full{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
+  .srow .thumb .np{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:10px;}
+  .srow .info{min-width:0; flex:1;}
+  .srow .nm{font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .srow .sub{font-size:12px; color:var(--muted);}
+  .srow .tag{font-size:11px; color:var(--pink-dark); background:var(--pink-soft); border-radius:99px; padding:0 8px; margin-left:6px; white-space:nowrap;}
+  /* modal */
+  #modal{position:fixed; inset:0; z-index:50; display:none; align-items:flex-end; justify-content:center;}
+  #modal.on{display:flex;}
+  #modal .bk{position:absolute; inset:0; background:rgba(30,10,18,.55);}
+  #modal .box{position:relative; background:#fff; width:100%; max-width:520px; max-height:92vh; overflow-y:auto;
+    border-radius:18px 18px 0 0; padding:14px 16px 22px;}
+  @media(min-width:640px){ #modal{align-items:center;} #modal .box{border-radius:18px;} }
+  #modal .frame{border-radius:12px; max-width:300px; margin:0 auto;}
+  #modal h2{font-size:16px; margin:12px 0 4px;}
+  #modal .row{font-size:14px; margin:3px 0; color:var(--ink);}
+  #modal .row .k{color:var(--muted); margin-right:6px;}
+  #modal .notes{font-size:13px; color:#5c4a50; background:#fdf6f8; border-radius:10px; padding:8px 10px; margin-top:8px; white-space:pre-wrap;}
+  #modal .close{position:absolute; top:10px; right:12px; border:none; background:var(--chip); width:32px; height:32px;
+    border-radius:50%; font-size:16px; cursor:pointer; z-index:2;}
+  footer.site{text-align:center; color:var(--muted); font-size:12px; padding:22px 12px 30px;}
+  .loadmsg{text-align:center; color:var(--muted); padding:40px 0;}
+</style>
+</head>
+<body>
+<header class="site">
+  <h1>Sana Photo Collection<br><span class="jp">諸橋沙夏 生写真图鉴</span></h1>
+  <div class="counts" id="counts">加载中…</div>
+  <div><span class="ro">只读公开版 · 数据快照</span></div>
+</header>
+
+<nav class="tabs">
+  <button id="tab-catalog" class="on" type="button">图鉴</button>
+  <button id="tab-series" type="button">系列</button>
+  <button id="tab-time" type="button">时间</button>
+</nav>
+
+<main>
+  <!-- 图鉴：搜索在前 -->
+  <section class="panel on" id="panel-catalog">
+    <div class="searchbox">
+      <input id="q" type="search" placeholder="搜系列名 / 款式 / 年月，如：フランス、ヨリ、2019 9月" autocomplete="off">
+      <button id="qbtn" type="button">搜索</button>
+    </div>
+    <div class="resultline" id="resultline"></div>
+    <div class="hint" id="nohint">没找到。可以试试：只输名字的一部分（如「フランス」）、用假名（如「さな」）、换个款式词（ヨリ / チュウ / ヒキ / 全身 / 半身 / 特写），或按年月搜（如「2021 3月」）。</div>
+  </section>
+
+  <!-- 系列 -->
+  <section class="panel" id="panel-series">
+    <div class="searchbox">
+      <input id="sq" type="search" placeholder="搜系列名，如：生誕、浴衣、フランス" autocomplete="off">
+      <button id="sqbtn" type="button">搜索</button>
+    </div>
+    <div class="chips" id="syears"></div>
+    <div class="chips" id="scats"></div>
+    <div class="chips" id="sstatus"></div>
+    <div class="resultline" id="sresult"></div>
+    <div id="slist"></div>
+    <div class="empty" id="sempty">没有符合条件的系列，试试清除筛选。</div>
+  </section>
+
+  <!-- 时间 -->
+  <section class="panel" id="panel-time">
+    <div class="chips" id="tyears"></div>
+    <div class="chips" id="tmonths"></div>
+    <div class="chips" id="tposes"></div>
+    <div class="resultline" id="tresult">先选一个年份，下面的照片墙会跟着收窄。</div>
+  </section>
+
+  <!-- 照片墙在最后 -->
+  <div id="wallbar">
+    <span class="t" id="walltitle">照片墙</span>
+    <span class="c" id="wallcount"></span>
+    <button class="clear" id="wallclear" type="button">清除筛选 ✕</button>
+  </div>
+  <div class="grid" id="wall"></div>
+  <div class="empty" id="wallempty">这个条件下没有照片。</div>
+  <div id="morewrap"><button id="more" type="button">加载更多</button></div>
+  <div class="loadmsg" id="loadmsg">正在加载数据…</div>
+</main>
+
+<footer class="site">Sana Photo Collection · 諸橋沙夏（=LOVE）官方生写真收藏图鉴 · 只读公开版，图片版权归官方及各来源所有</footer>
+
+<div id="modal">
+  <div class="bk" id="modalbk"></div>
+  <div class="box">
+    <button class="close" id="modalclose" type="button">✕</button>
+    <div id="modalbody"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ---------- helpers ---------- */
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+/* normalize: full->half width, katakana->hiragana, lowercase */
+function norm(s){
+  if(s==null) return "";
+  s = String(s);
+  s = s.replace(/[！-～]/g, function(c){ return String.fromCharCode(c.charCodeAt(0)-0xFEE0); });
+  s = s.replace(/　/g, " ");
+  s = s.replace(/[ァ-ヶ]/g, function(c){ return String.fromCharCode(c.charCodeAt(0)-0x60); });
+  return s.toLowerCase();
+}
+var MONTH_EN = ["january","february","march","april","may","june","july","august","september","october","november","december"];
+var SYN = {"全身":"ひき","半身":"ちゅう","特写":"より","近景":"より","特寫":"より"};
+/* extract a YYYY-MM intent from the raw query; returns {ym, rest} */
+function extractYM(q){
+  var m = q.match(/(\d{4})\s*[-/年]\s*(\d{1,2})\s*月?/);
+  if(m) return { ym: m[1]+"-"+("0"+m[2]).slice(-2), rest: q.replace(m[0], " ") };
+  m = q.match(/(\d{4})\s+(january|february|march|april|may|june|july|august|september|october|november|december)/i);
+  if(m) return { ym: m[1]+"-"+("0"+(MONTH_EN.indexOf(m[2].toLowerCase())+1)).slice(-2), rest: q.replace(m[0], " ") };
+  m = q.match(/(\d{4})\s*年\s*(\d{1,2})\s*月/);
+  if(m) return { ym: m[1]+"-"+("0"+m[2]).slice(-2), rest: q.replace(m[0], " ") };
+  return { ym:null, rest:q };
+}
+function tokenize(q){
+  var ex = extractYM(q);
+  var toks = norm(ex.rest).split(/[\s,、・/]+/).filter(Boolean);
+  return { ym: ex.ym, toks: toks };
+}
+function tokenHit(hay, tok){
+  if(hay.indexOf(tok) >= 0) return true;
+  if(SYN[tok] && hay.indexOf(SYN[tok]) >= 0) return true;
+  return false;
+}
+/* ---------- data ---------- */
+var S = {};        /* series by id */
+var SERIES = [], PHOTOS = [];
+var photosBySeries = {};
+function seriesOf(p){ return S[p.s] || {}; }
+function photoHay(p){
+  var s = seriesOf(p);
+  var extra = "";
+  if(s.m){ var yy = s.m.slice(0,4), mm = parseInt(s.m.slice(5,7), 10); extra = " " + yy + "年" + mm + "月 " + MONTH_EN[mm-1]; }
+  return norm((s.n||"") + " " + (p.p||"") + " " + (s.y||"") + " " + (s.m||"") + extra);
+}
+function matchTokens(hay, parsed){
+  for(var i=0;i<parsed.toks.length;i++){ if(!tokenHit(hay, parsed.toks[i])) return false; }
+  return true;
+}
+function poseBucket(p){
+  var pose = p.p || "";
+  if(pose.indexOf("ヨリ") === 0) return "ヨリ";
+  if(pose.indexOf("チュウ") === 0) return "チュウ";
+  if(pose.indexOf("ヒキ") === 0) return "ヒキ";
+  return "其他";
+}
+function categoryOf(s){
+  var n = s.n || "", id = s.id || "";
+  if(n.indexOf("生誕") >= 0) return "生诞纪念";
+  if(/コラボ|キラリナ|シナモロール|ヴィレッジヴァンガード|はなまる/.test(n)) return "联名合作";
+  if(n.indexOf("BD/DVD封入") >= 0 || /BD|DVD|Blu-ray|ブルーレイ|ライブ映像/.test(n)) return "BD·DVD封入特典";
+  if(n.indexOf("CD封入") >= 0 || id.indexOf("manual-cd-") === 0) return "CD封入特典";
+  if(/会場|ツアー|コンサート|アリーナ|ライブ/.test(n)) return "会场·活动";
+  return "官方商店";
+}
+function ymLabel(s){
+  if(s.m) return s.m.slice(0,4) + "年" + parseInt(s.m.slice(5,7),10) + "月";
+  if(s.y) return s.y + "年（无印字年月）";
+  return "年月未定";
+}
+/* crop / plain image markup inside a .frame-like relative box */
+function frameInner(p){
+  if(!p.img){
+    var inner = '<div class="nophoto"><span>图片待补充</span>';
+    if(p.tp) inner += '<span class="badge tp">第三方实物图</span>';
+    if(p.v === "needs_review") inner += '<span class="badge warn">待核实</span>';
+    return inner + "</div>";
+  }
+  if(p.cc){
+    var cols = p.cc, rows = p.rc || 1, col = p.ci || 0, row = p.ri || 0;
+    return '<img class="ph" loading="lazy" decoding="async" alt="" src="' + esc(p.img) + '" style="width:' + (cols*100) + '%;height:' + (rows*100) + '%;left:' + (-col*100) + '%;top:' + (-row*100) + '%">';
+  }
+  return '<img class="full" loading="lazy" decoding="async" alt="" src="' + esc(p.img) + '">';
+}
+/* ---------- state ---------- */
+var PAGE = 120;
+var state = {
+  tab: "catalog",
+  query: "",            /* catalog search raw text */
+  seriesFilter: null,   /* series id or null */
+  time: null,           /* {y: number|'undated', m: 'YYYY-MM'|'none'|null} */
+  pose: null,           /* pose bucket or null */
+  shown: PAGE,
+  sq: "", sYear: "all", sCat: "all", sStatus: "all",
+  tYear: null
+};
+function computeWall(){
+  var parsed = state.query ? tokenize(state.query) : null;
+  var out = [];
+  for(var i=0;i<PHOTOS.length;i++){
+    var p = PHOTOS[i], s = seriesOf(p);
+    if(state.seriesFilter && p.s !== state.seriesFilter) continue;
+    if(state.time){
+      var t = state.time;
+      if(t.y === "undated"){ if(s.y) continue; }
+      else {
+        if(s.y !== t.y) continue;
+        if(t.m === "none"){ if(s.m) continue; }
+        else if(t.m){ if(s.m !== t.m) continue; }
+      }
+    }
+    if(state.pose && poseBucket(p) !== state.pose) continue;
+    if(parsed){
+      if(parsed.ym && s.m !== parsed.ym) continue;
+      if(!matchTokens(photoHay(p), parsed)) continue;
+    }
+    out.push(p);
+  }
+  return out;
+}
+var wallList = [];
+function renderWall(reset){
+  if(reset) state.shown = PAGE;
+  wallList = computeWall();
+  var wall = document.getElementById("wall");
+  var html = "";
+  var n = Math.min(state.shown, wallList.length);
+  for(var i=0;i<n;i++){
+    var p = wallList[i], s = seriesOf(p);
+    html += '<div class="card" data-pid="' + esc(p.id) + '">'
+      + '<div class="frame">' + (p.tp && p.img ? '<span class="corner badge tp">第三方实物图</span>' : "") + frameInner(p) + "</div>"
+      + '<div class="meta"><span class="pose">' + esc(p.p || "") + '</span>'
+      + '<span class="sname">' + esc((s.n || "").trim()) + "</span></div></div>";
+  }
+  wall.innerHTML = html;
+  document.getElementById("wallempty").style.display = wallList.length ? "none" : "block";
+  document.getElementById("morewrap").style.display = wallList.length > state.shown ? "block" : "none";
+  /* wall bar */
+  var desc = [];
+  if(state.seriesFilter && S[state.seriesFilter]) desc.push("系列：" + S[state.seriesFilter].n.trim());
+  if(state.time) desc.push("时间：" + timeDesc());
+  if(state.pose) desc.push("款式：" + state.pose);
+  if(state.query) desc.push("搜索：" + state.query);
+  document.getElementById("walltitle").textContent = desc.length ? "筛选结果" : "照片墙";
+  document.getElementById("wallcount").textContent = "共 " + wallList.length + " 张" + (wallList.length > n ? " · 已显示 " + n + " 张" : "");
+  document.getElementById("wallclear").style.display = desc.length ? "" : "none";
+  /* catalog result line */
+  var rl = document.getElementById("resultline");
+  if(state.query){
+    var mset = {};
+    for(var j=0;j<wallList.length;j++) mset[wallList[j].s] = 1;
+    rl.innerHTML = "找到 <b>" + wallList.length + "</b> 张单张 · 来自 <b>" + Object.keys(mset).length + "</b> 个系列";
+    document.getElementById("nohint").style.display = wallList.length ? "none" : "block";
+  } else {
+    rl.textContent = "";
+    document.getElementById("nohint").style.display = "none";
+  }
+}
+function timeDesc(){
+  var t = state.time; if(!t) return "";
+  if(t.y === "undated") return "年月未定";
+  var d = t.y + "年";
+  if(t.m === "none") d += " · 无印字年月";
+  else if(t.m) d += " " + parseInt(t.m.slice(5,7),10) + "月";
+  return d;
+}
+function clearFilters(){
+  state.seriesFilter = null; state.time = null; state.pose = null; state.query = "";
+  document.getElementById("q").value = "";
+  state.tYear = null;
+  buildTimeChips(); renderWall(true);
+  document.getElementById("tresult").textContent = "先选一个年份，下面的照片墙会跟着收窄。";
+}
+/* ---------- modal ---------- */
+function openPhoto(pid){
+  var p = null;
+  for(var i=0;i<PHOTOS.length;i++) if(PHOTOS[i].id === pid){ p = PHOTOS[i]; break; }
+  if(!p) return;
+  var s = seriesOf(p);
+  var html = '<div class="frame">' + frameInner(p) + "</div>";
+  html += "<h2>" + esc((s.n || "").trim()) + "</h2>";
+  html += '<div class="row"><span class="k">款式</span>' + esc(p.p || "") + "</div>";
+  html += '<div class="row"><span class="k">年月</span>' + esc(ymLabel(s)) + (s.m && s.mv ? "（印字已核实）" : "") + "</div>";
+  if(p.tp) html += '<div class="row"><span class="badge tp">第三方实物图（非官方）</span></div>';
+  if(p.v === "needs_review") html += '<div class="row"><span class="badge warn">待核实</span></div>';
+  if(p.tp && p.src) html += '<div class="row"><span class="k">来源</span><a href="' + esc(p.src) + '" target="_blank" rel="noopener">第三方来源页</a></div>';
+  if(s.url) html += '<div class="row"><span class="k">官方</span><a href="' + esc(s.url) + '" target="_blank" rel="noopener">官方商品页</a></div>';
+  if(!s.url && s.src) html += '<div class="row"><span class="k">出处</span><a href="' + esc(s.src) + '" target="_blank" rel="noopener">官方公告</a></div>';
+  if(s.notes) html += '<div class="notes">' + esc(s.notes) + "</div>";
+  document.getElementById("modalbody").innerHTML = html;
+  document.getElementById("modal").classList.add("on");
+  document.body.style.overflow = "hidden";
+}
+function closeModal(){
+  document.getElementById("modal").classList.remove("on");
+  document.body.style.overflow = "";
+}
+/* ---------- series view ---------- */
+function seriesCounts(sid){ return photosBySeries[sid] || []; }
+function renderSeries(){
+  var parsed = state.sq ? tokenize(state.sq) : null;
+  var rows = [];
+  for(var i=0;i<SERIES.length;i++){
+    var s = SERIES[i], ph = seriesCounts(s.id);
+    if(state.sYear !== "all"){
+      if(state.sYear === "undated"){ if(s.y) continue; }
+      else if(s.y !== state.sYear) continue;
+    }
+    if(state.sCat !== "all" && categoryOf(s) !== state.sCat) continue;
+    if(state.sStatus === "has" && !ph.length) continue;
+    if(state.sStatus === "none" && ph.length) continue;
+    if(state.sStatus === "nt" && !s.nt) continue;
+    if(parsed){
+      if(parsed.ym && s.m !== parsed.ym) continue;
+      if(!matchTokens(norm(s.n + " " + (s.y||"") + " " + (s.m||"")), parsed)) continue;
+    }
+    rows.push(s);
+  }
+  var html = "";
+  for(var j=0;j<rows.length;j++){
+    var sr = rows[j], plist = seriesCounts(sr.id);
+    var withImg = 0, firstImg = null;
+    for(var k=0;k<plist.length;k++){ if(plist[k].img){ withImg++; if(!firstImg) firstImg = plist[k]; } }
+    var thumb;
+    var coverUrl = sr.cover || sr.sana;
+    if(coverUrl) thumb = '<img class="full" loading="lazy" alt="" src="' + esc(coverUrl) + '">';
+    else if(firstImg) thumb = frameInner(firstImg);
+    else thumb = '<div class="np">无图</div>';
+    html += '<div class="srow" data-sid="' + esc(sr.id) + '"><div class="thumb">' + thumb + "</div>"
+      + '<div class="info"><div class="nm">' + esc(sr.n.trim()) + (sr.nt ? '<span class="tag">不追踪</span>' : "") + "</div>"
+      + '<div class="sub">' + esc(ymLabel(sr)) + " · " + esc(categoryOf(sr)) + " · 单张 " + plist.length + " 张 · 有图 " + withImg + " 张</div></div></div>";
+  }
+  document.getElementById("slist").innerHTML = html;
+  document.getElementById("sempty").style.display = rows.length ? "none" : "block";
+  document.getElementById("sresult").innerHTML = "共 <b>" + rows.length + "</b> 个系列";
+}
+function chipHTML(kind, val, label, count, on){
+  return '<button type="button" class="chip' + (on ? " on" : "") + '" data-kind="' + kind + '" data-val="' + esc(String(val)) + '">' + esc(label) + (count != null ? "<small>" + count + "</small>" : "") + "</button>";
+}
+function buildSeriesChips(){
+  var yc = {}, cats = {}, i, s;
+  for(i=0;i<SERIES.length;i++){ s = SERIES[i]; var yk = s.y || "undated"; yc[yk] = (yc[yk]||0)+1; var c = categoryOf(s); cats[c] = (cats[c]||0)+1; }
+  var years = Object.keys(yc).filter(function(k){ return k !== "undated"; }).sort(function(a,b){ return b-a; });
+  var h = '<span class="lab">年份</span>' + chipHTML("sy", "all", "全部", SERIES.length, state.sYear === "all");
+  for(i=0;i<years.length;i++) h += chipHTML("sy", years[i], years[i]+"年", yc[years[i]], String(state.sYear) === years[i]);
+  if(yc.undated) h += chipHTML("sy", "undated", "年份未定", yc.undated, state.sYear === "undated");
+  document.getElementById("syears").innerHTML = h;
+  var catOrder = ["官方商店","会场·活动","CD封入特典","BD·DVD封入特典","联名合作","生诞纪念","其他"];
+  h = '<span class="lab">类别</span>' + chipHTML("sc", "all", "全部", null, state.sCat === "all");
+  for(i=0;i<catOrder.length;i++) if(cats[catOrder[i]]) h += chipHTML("sc", catOrder[i], catOrder[i], cats[catOrder[i]], state.sCat === catOrder[i]);
+  document.getElementById("scats").innerHTML = h;
+  h = '<span class="lab">状态</span>'
+    + chipHTML("ss", "all", "全部", null, state.sStatus === "all")
+    + chipHTML("ss", "has", "有单张", null, state.sStatus === "has")
+    + chipHTML("ss", "none", "只有系列记录", null, state.sStatus === "none")
+    + chipHTML("ss", "nt", "不追踪", null, state.sStatus === "nt");
+  document.getElementById("sstatus").innerHTML = h;
+}
+/* ---------- time view ---------- */
+function buildTimeChips(){
+  var yc = {}, i, p;
+  for(i=0;i<PHOTOS.length;i++){ p = PHOTOS[i]; var s = seriesOf(p); var yk = s.y || "undated"; yc[yk] = (yc[yk]||0)+1; }
+  var years = Object.keys(yc).filter(function(k){ return k !== "undated"; }).sort(function(a,b){ return b-a; });
+  var h = '<span class="lab">年份</span>';
+  for(i=0;i<years.length;i++) h += chipHTML("ty", years[i], years[i]+"年", yc[years[i]], state.tYear === Number(years[i]));
+  if(yc.undated) h += chipHTML("ty", "undated", "年月未定", yc.undated, state.tYear === "undated");
+  document.getElementById("tyears").innerHTML = h;
+  /* months */
+  var mh = "";
+  if(state.tYear && state.tYear !== "undated"){
+    var mc = {}, noneCount = 0;
+    for(i=0;i<PHOTOS.length;i++){ p = PHOTOS[i]; var s2 = seriesOf(p); if(s2.y !== state.tYear) continue; if(s2.m) mc[s2.m] = (mc[s2.m]||0)+1; else noneCount++; }
+    var months = Object.keys(mc).sort().reverse();
+    mh = '<span class="lab">月份</span>' + chipHTML("tm", "", "全部", null, !!(state.time && state.time.y === state.tYear && !state.time.m));
+    for(i=0;i<months.length;i++) mh += chipHTML("tm", months[i], parseInt(months[i].slice(5,7),10)+"月", mc[months[i]], !!(state.time && state.time.m === months[i]));
+    if(noneCount) mh += chipHTML("tm", "none", "无印字年月", noneCount, !!(state.time && state.time.m === "none"));
+  }
+  document.getElementById("tmonths").innerHTML = mh;
+  var poses = ["ヨリ","チュウ","ヒキ","其他"];
+  var ph = '<span class="lab">款式</span>' + chipHTML("tp2", "", "全部", null, !state.pose);
+  for(i=0;i<poses.length;i++) ph += chipHTML("tp2", poses[i], poses[i], null, state.pose === poses[i]);
+  document.getElementById("tposes").innerHTML = ph;
+}
+/* ---------- tabs ---------- */
+function switchTab(tab){
+  state.tab = tab;
+  var tabs = ["catalog","series","time"];
+  for(var i=0;i<tabs.length;i++){
+    document.getElementById("tab-"+tabs[i]).classList.toggle("on", tabs[i] === tab);
+    document.getElementById("panel-"+tabs[i]).classList.toggle("on", tabs[i] === tab);
+  }
+  if(tab === "series"){ buildSeriesChips(); renderSeries(); }
+  if(tab === "time"){ buildTimeChips(); }
+  window.scrollTo(0, 0);
+}
+/* ---------- events ---------- */
+function bind(){
+  document.getElementById("tab-catalog").addEventListener("click", function(){ switchTab("catalog"); });
+  document.getElementById("tab-series").addEventListener("click", function(){ switchTab("series"); });
+  document.getElementById("tab-time").addEventListener("click", function(){ switchTab("time"); });
+  var q = document.getElementById("q");
+  function doSearch(){ state.query = q.value.trim(); state.seriesFilter = null; renderWall(true); }
+  document.getElementById("qbtn").addEventListener("click", doSearch);
+  q.addEventListener("keydown", function(e){ if(e.key === "Enter") doSearch(); });
+  q.addEventListener("input", function(){ if(!q.value.trim() && state.query){ state.query = ""; renderWall(true); } });
+  document.getElementById("more").addEventListener("click", function(){ state.shown += PAGE; renderWall(false); });
+  document.getElementById("wallclear").addEventListener("click", clearFilters);
+  document.getElementById("wall").addEventListener("click", function(e){
+    var card = e.target.closest(".card"); if(card) openPhoto(card.getAttribute("data-pid"));
+  });
+  document.getElementById("modalclose").addEventListener("click", closeModal);
+  document.getElementById("modalbk").addEventListener("click", closeModal);
+  document.addEventListener("keydown", function(e){ if(e.key === "Escape") closeModal(); });
+  /* series panel */
+  var sq = document.getElementById("sq");
+  function doSSearch(){ state.sq = sq.value.trim(); renderSeries(); }
+  document.getElementById("sqbtn").addEventListener("click", doSSearch);
+  sq.addEventListener("keydown", function(e){ if(e.key === "Enter") doSSearch(); });
+  sq.addEventListener("input", function(){ if(!sq.value.trim() && state.sq){ state.sq = ""; renderSeries(); } });
+  document.getElementById("panel-series").addEventListener("click", function(e){
+    var chip = e.target.closest(".chip");
+    if(chip){
+      var kind = chip.getAttribute("data-kind"), val = chip.getAttribute("data-val");
+      if(kind === "sy") state.sYear = (val === "all" || val === "undated") ? val : Number(val);
+      if(kind === "sc") state.sCat = val;
+      if(kind === "ss") state.sStatus = val;
+      buildSeriesChips(); renderSeries(); return;
+    }
+    var row = e.target.closest(".srow");
+    if(row){
+      state.seriesFilter = row.getAttribute("data-sid");
+      state.query = ""; document.getElementById("q").value = "";
+      switchTab("catalog"); renderWall(true);
+      document.getElementById("wallbar").scrollIntoView({ behavior:"smooth" });
+    }
+  });
+  /* time panel */
+  document.getElementById("panel-time").addEventListener("click", function(e){
+    var chip = e.target.closest(".chip"); if(!chip) return;
+    var kind = chip.getAttribute("data-kind"), val = chip.getAttribute("data-val");
+    if(kind === "ty"){
+      if(val === "undated"){ state.tYear = "undated"; state.time = { y:"undated", m:null }; }
+      else { state.tYear = Number(val); state.time = { y:Number(val), m:null }; }
+    }
+    if(kind === "tm" && state.tYear && state.tYear !== "undated"){
+      state.time = { y: state.tYear, m: val === "" ? null : val };
+    }
+    if(kind === "tp2"){ state.pose = val === "" ? null : val; }
+    buildTimeChips(); renderWall(true);
+    if(state.time) document.getElementById("tresult").innerHTML = "已选 <b>" + esc(timeDesc()) + "</b>" + (state.pose ? " · 款式 <b>" + esc(state.pose) + "</b>" : "") + "，照片墙共 <b>" + wallList.length + "</b> 张";
+  });
+}
+/* ---------- init ---------- */
+fetch("data.json").then(function(r){ return r.json(); }).then(function(d){
+  SERIES = d.series; PHOTOS = d.photos;
+  for(var i=0;i<SERIES.length;i++) S[SERIES[i].id] = SERIES[i];
+  for(var j=0;j<PHOTOS.length;j++){ var sid = PHOTOS[j].s; (photosBySeries[sid] = photosBySeries[sid] || []).push(PHOTOS[j]); }
+  var withImg = PHOTOS.filter(function(p){ return !!p.img; }).length;
+  document.getElementById("counts").innerHTML = "共 <b>" + SERIES.length + "</b> 个系列 · <b>" + PHOTOS.length + "</b> 张单张 · <b>" + withImg + "</b> 张有图";
+  document.getElementById("loadmsg").style.display = "none";
+  bind(); renderWall(true);
+}).catch(function(){
+  document.getElementById("loadmsg").textContent = "数据加载失败，请确认 data.json 与本页在同一目录。";
+});
+</script>
+</body>
+</html>
