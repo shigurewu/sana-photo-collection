@@ -249,7 +249,7 @@ function ymLabel(s){
    centering (shop sheets), never distorting the source aspect ratio. */
 function r2(x){ return Math.round(x*100)/100; }
 function frameAttr(p){
-  if(p && p.img && p.cw) return ' style="aspect-ratio:' + p.cw + ' / ' + p.ch + '"';
+  if(p && p.img && p.cw) return ' style="aspect-ratio:' + (p.cw / (p.ch * (p.k || 1))).toFixed(4) + '"';
   return "";
 }
 function frameInner(p){
@@ -260,17 +260,28 @@ function frameInner(p){
     return inner + "</div>";
   }
   if(p.cw){
+    /* exact measured crop: scale by width only (natural aspect kept, k = sheet H/W),
+       frame aspect is set to the crop's pixel aspect via frameAttr */
     var st = "background-image:url('" + esc(p.img) + "');background-size:"
-      + r2(100/p.cw) + "% " + r2(100/p.ch) + "%;background-position:"
+      + r2(100/p.cw) + "% auto;background-position:"
       + r2(p.cx/(1-p.cw)*100) + "% " + r2(p.cy/(1-p.ch)*100) + "%";
     return '<div class="bgimg" style="' + st + '"></div>';
   }
   if(p.cc){
     var cols = p.cc, rows = p.rc || 1, col = p.ci || 0, row = p.ri || 0;
     var px = cols > 1 ? col/(cols-1)*100 : 0;
-    var py = (row + 0.5)/rows*100;
-    var st2 = "background-image:url('" + esc(p.img) + "');background-size:"
-      + (cols*100) + "% auto;background-position:" + r2(px) + "% " + r2(py) + "%";
+    /* r = displayed sheet height / frame height; choose position so the row band centers */
+    var r = 0.75 * cols * (p.k || 1);
+    var py;
+    if(r > 1.05){
+      py = ((row + 0.5)/rows * r - 0.5) / (r - 1) * 100;
+      py = Math.max(0, Math.min(100, py));
+      var st2 = "background-image:url('" + esc(p.img) + "');background-size:"
+        + (cols*100) + "% auto;background-position:" + r2(px) + "% " + r2(py) + "%";
+    } else {
+      var st2 = "background-image:url('" + esc(p.img) + "');background-size:auto "
+        + (rows*100) + "%;background-position:" + r2(px) + "% " + (rows > 1 ? r2(row/(rows-1)*100) : 0) + "%";
+    }
     return '<div class="bgimg" style="' + st2 + '"></div>';
   }
   return '<img class="full" loading="lazy" decoding="async" alt="" src="' + esc(p.img) + '">';
